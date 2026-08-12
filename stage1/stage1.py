@@ -1,4 +1,3 @@
-import csv
 import json
 from pyspark.sql.types import StructType
 from pyspark.sql import SparkSession
@@ -38,16 +37,20 @@ def transform_films(df):
 def apply_schema(df, schema):
     return df.select([F.col(field.name).cast(field.dataType).alias(field.name) for field in schema.fields])
 
+def save_df(df, path):
+    df.write.parquet(path, mode="overwrite")
+
 def main(spark_session):
     schema = load_schema("../resources/json/allFilesSchema.json")
     df = load_csv("../resources/csv/allFilms.csv", spark_session)
     df = transform_films(df)
     df = apply_schema(df, schema)
-    df.show()
+    save_df(df, "../films/films.parquet")
 
 if __name__ == "__main__":
     spark_session = SparkSession.builder \
         .appName("CSV Loader") \
         .getOrCreate()
     main(spark_session)
+
 
