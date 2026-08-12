@@ -17,16 +17,29 @@ def add_title_similarity_score(df, film_title):
     return df
 
 def add_genre_similarity_score(df, film_genre):
-    genre_words = [genre.strip().lower()for genre in film_genre.split(",")]
-
+    genre_words = [genre.strip().lower() for genre in film_genre.split(",")]
+    print(genre_words)
     #using jaccard index to measure similarity
     df = df.withColumn(
         "genre_similarity_score",
         F.size(F.array_intersect(
+            F.transform(
             F.split(F.lower(F.col("genres")), ","),
+            lambda x: F.trim(x)
+            ),
             F.transform(
             F.array(*[F.lit(word) for word in genre_words]),
             lambda x: F.trim(x)
+            )
+        ))/
+        F.size(F.array_union(
+            F.transform(
+            F.split(F.lower(F.col("genres")), ","),
+            lambda x: F.trim(x)
+            ),
+            F.transform(
+                F.array(*[F.lit(word) for word in genre_words]),
+                lambda x: F.trim(x)
             )
         ))
     )
@@ -50,4 +63,4 @@ if __name__ == "__main__":
         .getOrCreate()
     film_df = load_film_df(spark_session)
     comp_df = generate_film_comparison_df(760, film_df)
-    comp_df.select("id", "title", "genres", "title_similarity_score", "genre_similarity_score", "total_similarity_score").orderBy(F.desc("total_similarity_score")).limit(10000).show(1000)
+    comp_df.select("id", "title", "genres", "title_similarity_score", "genre_similarity_score", "total_similarity_score").orderBy(F.desc("total_similarity_score")).limit(10000).show(n=1100, truncate=False)
