@@ -17,13 +17,17 @@ def add_title_similarity_score(df, film_title):
     return df
 
 def add_genre_similarity_score(df, film_genre):
-    genre_words = set(film_genre.lower().split())
+    genre_words = [genre.strip().lower()for genre in film_genre.split(",")]
+
     #using jaccard index to measure similarity
     df = df.withColumn(
         "genre_similarity_score",
         F.size(F.array_intersect(
             F.split(F.lower(F.col("genres")), ","),
-            F.array(*[F.lit(word) for word in genre_words])
+            F.transform(
+            F.array(*[F.lit(word) for word in genre_words]),
+            lambda x: F.trim(x)
+            )
         ))
     )
     return df
