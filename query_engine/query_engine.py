@@ -24,9 +24,9 @@ def get_filter_function(query):
     elif query.operation == "<":
         return less_than_filter
     elif query.operation == ">=":
-        return lambda query, value: greater_than_filter(query, value).union(equals_filter(query, value))
+        return greater_than_or_equal_filter
     elif query.operation == "<=":
-        return lambda query, value: greater_than_filter(query, value).union(equals_filter(query, value))
+        return less_than_or_equal_filter
     elif query.operation == "in":
         return in_filter
     elif query.operation == "not in":
@@ -49,6 +49,12 @@ def greater_than_filter(query, value):
 
 def less_than_filter(query, value):
     return F.col(query.column) < value
+
+def greater_than_or_equal_filter(query, value):
+    return F.col(query.column) >= value
+
+def less_than_or_equal_filter(query, value):
+    return F.col(query.column) <= value
 
 def in_filter(query, value):
     return F.col(query.column).isin(value)
@@ -88,9 +94,9 @@ def execute_query(filter_obj, df):
         raise Exception(f"Filter {filter_obj} not supported")
     return df
 
-
-df = load_film_df(SparkSession.builder.appName("Query Engine").getOrCreate())
-filter1 = filter.Filter("release_year", "between", ("1979-01-01", "2000-01-01"))
-filter2 = filter.Filter("adult", "!=", "True")
-df = execute_query((filter1, filter2), df)
-df.show(10000)
+if __name__ == "__main__":
+    df = load_film_df(SparkSession.builder.appName("Query Engine").getOrCreate())
+    filter1 = filter.Filter("release_year", "between", ("1979-01-01", "2000-01-01"))
+    filter2 = filter.Filter("adult", "!=", "True")
+    df = execute_query((filter1, filter2), df)
+    df.show(10000)
