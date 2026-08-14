@@ -134,3 +134,13 @@ def test_between_filter(film_df):
 
 def test_cast_to_type(film_df):
     query_filter = Filter("release_year", ">=", "1980-01-01")
+    assert query_filter.values == (datetime.date(1980,1,1),)
+    query_filter = Filter("adult", ">=", "True")
+    assert query_filter.values == (True,)
+    query_filter = Filter("durationMins", ">=", 120)
+    assert query_filter.values == (120,)
+    query_filter = Filter("durationMins", ">=", 120.5)
+    assert query_filter.values == (120.5,)
+    query_filter = Filter("tilte", "==", "Rocky II")
+    assert query_filter.values == ("Rocky II",)
+

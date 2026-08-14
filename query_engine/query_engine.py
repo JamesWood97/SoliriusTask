@@ -1,7 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 from stage2.stage2 import load_film_df
-from query_engine.filter import Filter
+from filter import Filter
 from datetime import datetime
 
 def filter_data(query, df):

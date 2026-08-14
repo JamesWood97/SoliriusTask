@@ -30,9 +30,9 @@ class Filter:
     @values.setter
     def values(self, values):
         if any(isinstance(values, x) for x in (str, float, int, bool)):
-            self._values = values,
+            self._values = (values,)
         elif isinstance(values, (list, tuple)):
-            self._values = values
+            self._values = tuple(values)
         else:
             raise TypeError
 
