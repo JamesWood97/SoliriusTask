@@ -135,7 +135,7 @@ def test_multiple_filters(film_df):
     query_filter1 = Filter(
         "release_year",
         "between",
-        ("1979-01-01", "2000-01-01"),#note: this will include movies released across 1980 as only year is tracked
+        ("1979-01-01", "2000-01-01"),#note: this will include movies released across 2000 as only year is tracked
     )
     query_filter2 = Filter("director", "in", ("Quentin Tarantino", "George Lucas"))
     result = execute_query((query_filter1, query_filter2), film_df)
