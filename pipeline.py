@@ -16,10 +16,7 @@ def create_spark_session():
 
 
 class Stage1FilmsTask(luigi.Task):
-    """
-    Loads the CSV, transforms the film data, applies the supplied
-    schema and writes the result as Parquet.
-    """
+
     def output(self, films_path=project_root / "output" / "films.parquet"):
         return luigi.LocalTarget(str(films_path / "_SUCCESS"))
 
@@ -40,6 +37,7 @@ class Stage1FilmsTask(luigi.Task):
             spark_session.stop()
 
 class Stage2FilmsTask(luigi.Task):
+
     def requires(self):
         return Stage1FilmsTask()
     def output(self):
