@@ -1,7 +1,7 @@
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 from stage2.stage2 import load_film_df
-import filter
+from query_engine.filter import Filter
 from datetime import datetime
 
 def filter_data(query, df):
@@ -87,7 +87,7 @@ def execute_query(filter_obj, df):
     if isinstance(filter_obj, list) or isinstance(filter_obj, tuple):
         for filter_instance in filter_obj:
             df = execute_query(filter_instance, df)
-    elif isinstance(filter_obj, filter.Filter):
+    elif isinstance(filter_obj, Filter):
         cast_to_type(filter_obj, df)
         df = filter_data(filter_obj, df)
     else:
@@ -96,7 +96,7 @@ def execute_query(filter_obj, df):
 
 if __name__ == "__main__":
     df = load_film_df(SparkSession.builder.appName("Query Engine").getOrCreate())
-    filter1 = filter.Filter("release_year", "between", ("1979-01-01", "2000-01-01"))
-    filter2 = filter.Filter("adult", "!=", "True")
+    filter1 = Filter("release_year", "between", ("1979-01-01", "2000-01-01"))
+    filter2 = Filter("adult", "!=", "True")
     df = execute_query((filter1, filter2), df)
     df.show(10000)
