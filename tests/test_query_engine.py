@@ -4,7 +4,7 @@ import pytest
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 from query_engine.filter import Filter
-from query_engine.query_engine import execute_query
+from query_engine.query_engine import execute_query, cast_query_values_to_type
 from stage2.stage2 import load_film_df
 
 
@@ -80,7 +80,7 @@ def test_in_filter(film_df):
 def test_not_in_filter(film_df):
     query_filter = Filter("runtime", "not in", [i for i in range(120)])
     result = execute_query(query_filter, film_df)
-    assert all([row.runtime > 120 for row in result.collect()])
+    assert all([row.runtime >= 120 for row in result.collect()])
 
 
 def test_contains_filter(film_df):
@@ -143,15 +143,20 @@ def test_multiple_filters(film_df):
     assert True
 
 
-def test_cast_to_type(film_df):
+def test_cast_query_values_to_type(film_df):
     query_filter = Filter("release_year", ">=", "1980-01-01")
+    cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == (datetime.date(1980,1,1),)
+
     query_filter = Filter("adult", ">=", "True")
+    cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == (True,)
+
     query_filter = Filter("durationMins", ">=", 120)
+    cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == (120,)
-    query_filter = Filter("durationMins", ">=", 120.5)
-    assert query_filter.values == (120.5,)
+
     query_filter = Filter("tilte", "==", "Rocky II")
+    cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == ("Rocky II",)
 

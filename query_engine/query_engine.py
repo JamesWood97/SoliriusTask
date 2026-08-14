@@ -1,7 +1,10 @@
 import pyspark.sql.functions as F
 from pyspark.sql import SparkSession
 from stage2.stage2 import load_film_df
-from filter import Filter
+try:
+    from .filter import Filter
+except ImportError:
+    from filter import Filter
 from datetime import datetime
 
 def filter_data(query, df):
@@ -59,11 +62,11 @@ def greater_than_or_equal_filter(query, value):
 def less_than_or_equal_filter(query, value):
     return F.col(query.column) <= value
 
-def in_filter(query, value):
-    return F.col(query.column).isin(value)
+def in_filter(query, array):
+    return F.col(query.column).isin(array)
 
-def not_in_filter(query, value):
-    return ~F.col(query.column).isin(value)
+def not_in_filter(query, array):
+    return ~F.col(query.column).isin(array)
 
 def contains_filter(query, value):
     return F.col(query.column).contains(F.lit(value))
@@ -71,7 +74,7 @@ def contains_filter(query, value):
 def between_filter(query):
     return F.col(query.column).between(query.values[0], query.values[1])
 
-def cast_to_type(query, df):
+def cast_query_values_to_type(query, df):
     column_type = dict(df.dtypes)[query.column]
     if column_type == "date":
         query.values = [datetime.strptime(v, "%Y-%m-%d").date() for v in query.values]
@@ -91,15 +94,8 @@ def execute_query(filter_obj, df):
         for filter_instance in filter_obj:
             df = execute_query(filter_instance, df)
     elif isinstance(filter_obj, Filter):
-        cast_to_type(filter_obj, df)
+        cast_query_values_to_type(filter_obj, df)
         df = filter_data(filter_obj, df)
     else:
         raise Exception(f"Filter {filter_obj} not supported")
     return df
-
-if __name__ == "__main__":
-    df = load_film_df(SparkSession.builder.appName("Query Engine").getOrCreate())
-    filter1 = Filter("release_year", "between", ("1979-01-01", "2000-01-01"))
-    filter2 = Filter("adult", "!=", "True")
-    df = execute_query((filter1, filter2), df)
-    df.show(10000)
