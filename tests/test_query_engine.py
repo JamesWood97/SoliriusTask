@@ -73,14 +73,14 @@ def test_in_filter(film_df):
     query_filter = Filter("title", "in", ("Pulp Fiction", "The Matrix"))
     result = execute_query(query_filter, film_df)
     titles = [row.title for row in result.collect()]
-    assert all(title in ("Pulp Fiction", "The Matrix") for title in titles)
+    assert {"Pulp Fiction", "The Matrix"} == set(titles)
     assert len(titles) == 2
 
 
 def test_not_in_filter(film_df):
-    query_filter = Filter("title", "not in", ("Pulp Fiction",))
+    query_filter = Filter("runtime", "not in", [i for i in range(120)])
     result = execute_query(query_filter, film_df)
-    assert "Pulp Fiction" not in [row.title for row in result.collect()]
+    assert all([row.runtime > 120 for row in result.collect()])
 
 
 def test_contains_filter(film_df):
@@ -99,7 +99,7 @@ def test_between_filter(film_df):
 
     result = execute_query(query_filter, film_df)
 
-    assert set([row.title for row in result.collect()]) == set(['Star Wars: The Empire Strikes Back (Episode V)',
+    assert set([row.title for row in result.collect()]) == {'Star Wars: The Empire Strikes Back (Episode V)',
      'Herbie Goes Bananas',
      'Rocky II',
      'Friendship',
@@ -129,7 +129,18 @@ def test_between_filter(film_df):
      'Return To The 36th Chamber',
      'Whispers',
      'Gol Maal',
-     'The Ghosts of Buxley Hall'])
+     'The Ghosts of Buxley Hall'}
+
+def test_multiple_filters(film_df):
+    query_filter1 = Filter(
+        "release_year",
+        "between",
+        ("1979-01-01", "2000-01-01"),#note: this will include movies released across 1980 as only year is tracked
+    )
+    query_filter2 = Filter("director", "in", ("Quentin Tarantino", "George Lucas"))
+    result = execute_query((query_filter1, query_filter2), film_df)
+    result.show(n=1000)
+    assert True
 
 
 def test_cast_to_type(film_df):

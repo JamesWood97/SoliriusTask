@@ -7,11 +7,14 @@ from datetime import datetime
 def filter_data(query, df):
     if query.operation == "between":
         condition = between_filter(query)
-        return df.filter(condition)
-
-    condition = F.lit(False)
-    for value in query.values:
-        condition = condition | get_filter_function(query)(query, value)
+    elif query.operation == "in":
+        condition = in_filter(query, query.values)
+    elif query.operation == "not in":
+        condition = not_in_filter(query, query.values)
+    else:
+        condition = F.lit(False)
+        for value in query.values:
+            condition = condition | get_filter_function(query)(query, value)
     return df.filter(condition)
 
 def get_filter_function(query):
