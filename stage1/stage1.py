@@ -45,7 +45,7 @@ def main(spark_session):
     df = load_csv("../resources/csv/allFilms.csv", spark_session)
     df = transform_films(df)
     df = apply_schema(df, schema)
-    save_df(df, "../films/films.parquet")
+    save_df(df, "../output/films.parquet")
 
 if __name__ == "__main__":
     spark_session = SparkSession.builder \

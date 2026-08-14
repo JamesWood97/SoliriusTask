@@ -4,8 +4,7 @@ from pyspark.sql import functions as F
 from pathlib import Path
 
 def load_film_df(spark_session):
-    # Build a stable path relative to this file so runs from any cwd work.
-    parquet_path = Path(__file__).resolve().parent.parent / "films" / "films.parquet"
+    parquet_path = Path(__file__).resolve().parent.parent / "output" / "films.parquet"
     df = spark_session.read.parquet(str(parquet_path))
     return df
 
@@ -29,16 +28,14 @@ def save_genre_df(genre_df, output_path):
     for genre in genres:
         (
             genre_df
-            .filter(F.col("particular_genre") == genre) .drop("particular_genre")
+            .filter(F.col("particular_genre") == genre).drop("particular_genre")
             .write.mode("overwrite").parquet(output_path+"/"+genre+".parquet")
         )
 
 def main(spark_session):
     film_df = load_film_df(spark_session)
-    film_df.show()
     genre_df = create_temp_genre_df(film_df)
-    genre_df.show(n=10000, truncate=False)
-    save_genre_df(genre_df, "../genres")
+    save_genre_df(genre_df, "../output/genres")
 
 
 
