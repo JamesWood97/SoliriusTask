@@ -49,7 +49,8 @@ class Stage2FilmsTask(luigi.Task):
        try:
            film_df = stage2.load_film_df(spark_session)
            genre_df = stage2.create_temp_genre_df(film_df)
-           stage2.save_genre_df(genre_df, "../output/genres")
+           genres_path = project_root / "output" / "genres"
+           stage2.save_genre_df(genre_df, str(genres_path))
 
            with self.output().open("w") as marker:
                marker.write("Stage 2 completed successfully\n")
