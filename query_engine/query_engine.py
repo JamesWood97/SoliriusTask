@@ -63,10 +63,10 @@ def less_than_or_equal_filter(query, value):
     return F.col(query.column) <= value
 
 def in_filter(query, array):
-    return F.col(query.column).isin(array)
+    return F.col(query.column).isin(*array)
 
 def not_in_filter(query, array):
-    return ~F.col(query.column).isin(array)
+    return ~F.col(query.column).isin(*array)
 
 def contains_filter(query, value):
     return F.col(query.column).contains(F.lit(value))

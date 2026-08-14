@@ -78,9 +78,9 @@ def test_in_filter(film_df):
 
 
 def test_not_in_filter(film_df):
-    query_filter = Filter("runtime", "not in", [i for i in range(120)])
+    query_filter = Filter("durationMins", "not in", [i for i in range(120)])
     result = execute_query(query_filter, film_df)
-    assert all([row.runtime >= 120 for row in result.collect()])
+    assert all([row.durationMins >= 120 for row in result.collect()])
 
 
 def test_contains_filter(film_df):
@@ -135,12 +135,12 @@ def test_multiple_filters(film_df):
     query_filter1 = Filter(
         "release_year",
         "between",
-        ("1979-01-01", "2000-01-01"),#note: this will include movies released across 2000 as only year is tracked
+        ("1979-01-01", "2000-01-01")#note: this will include movies released across 2000 as only year is tracked
     )
     query_filter2 = Filter("director", "in", ("Quentin Tarantino", "George Lucas"))
     result = execute_query((query_filter1, query_filter2), film_df)
-    result.show(n=1000)
-    assert True
+    result.show(n=1000, truncate=False)
+    assert set([row.title for row in result.collect()]) == {'Jackie Brown', "Pulp Fiction", "Star Wars: The Phantom Menace (Episode I)"}
 
 
 def test_cast_query_values_to_type(film_df):
@@ -156,7 +156,7 @@ def test_cast_query_values_to_type(film_df):
     cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == (120,)
 
-    query_filter = Filter("tilte", "==", "Rocky II")
+    query_filter = Filter("title", "==", "Rocky II")
     cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == ("Rocky II",)
 
