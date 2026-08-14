@@ -13,7 +13,7 @@ def load_csv(csv_path, spark_session):
     csv_df = (
         spark_session.read
         .option("header", True)
-        .option("inferSchema", True)
+        .option("inferSchema", False)
         .csv(str(csv_path))
     )
 

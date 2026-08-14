@@ -7,8 +7,8 @@ from pyspark.sql import functions as F
 from stage2.stage2 import load_film_df
 
 def add_title_similarity_score(df, film_title):
-    # Calculate the title similarity score based on the number of common words in the titles
-    words_to_ignore = {"the", "a", "an", "and", "of", "in", "on", "at", "to", "for", "with", "by", "from"}
+    #Calculates the title similarity score based on the number of common words in the titles
+    words_to_ignore = {"the", "a", "an", "and", "of", "in", "on", "at", "to", "for", "with", "by", "from"}#ignore common grammar words
     film_title_words = set(film_title.lower().split())
     number_of_words = len(film_title_words)
     df = df.withColumn(
@@ -31,9 +31,12 @@ def add_cast_similarity_score(df, film_cast):
     return add_similarity_score(df, "cast", film_cast)
 
 def add_similarity_score(df, column, value_string_to_compare):
+    """
+    The base of most of the similarity scores. Uses jaccard indexing to measure similary of the given column and valuestring
+    """
     words = [genre.strip().lower() for genre in value_string_to_compare.split(",")]
     print(words)
-    #using jaccard index to measure similarity
+    #using jaccard index to measure similarity https://en.wikipedia.org/wiki/Jaccard_index
     df = df.withColumn(
         f"{column}_similarity_score",
         F.size(F.array_intersect(
@@ -60,11 +63,20 @@ def add_similarity_score(df, column, value_string_to_compare):
     return df
 
 def generate_film_comparison_df(film_id, film_df, similarity_threshold=0):
+    """
+    Main function for generating a comparision dataframe to a given film_id
+    """
 
+    """
+    How each comparision should be weighted 
+    """
     title_similarity_weight = 4
     genres_overlap_weight = 2
     director_overlap_weight = 1
     cast_overlap_weight = 2
+    scaling_factor = 0.4#used to increase the percentages more for lower values, should be between 0 and 1
+
+
     total_weight = title_similarity_weight + genres_overlap_weight + director_overlap_weight + cast_overlap_weight
 
     film = film_df.filter(F.col("id") == film_id).first()
@@ -73,6 +85,8 @@ def generate_film_comparison_df(film_id, film_df, similarity_threshold=0):
     df = add_genre_similarity_score(df, film["genres"])
     df = add_director_similarity_score(df, film["director"])
     df = add_cast_similarity_score(df, film["cast"])
+
+    #add up similarity scores
     df = df.withColumn("total_similarity_score",
                        F.lit(title_similarity_weight) * F.col("title_similarity_score") +\
                     F.lit(genres_overlap_weight) * F.col("genres_similarity_score") +\
@@ -82,15 +96,16 @@ def generate_film_comparison_df(film_id, film_df, similarity_threshold=0):
 
     df = df.withColumn("similarity_percentage",
                        F.round(F.col("total_similarity_score") / F.lit(total_weight) * F.lit(100), 2))
-    # square root the difference between the similarity percentage and 100 to give less weight to high similarity films e.g >70
-    scaling_factor = 0.4
 
+
+    #Applies this function https://www.desmos.com/calculator/avelzvsolp with a = scaling_factor to remap percentages higher
     df = df.withColumn("similarity_percentage",
                        F.round(F.power(F.col("similarity_percentage"), F.lit(scaling_factor))*F.power(F.lit(100), F.lit(1) - F.lit(scaling_factor)), 2))
     df = df.filter(F.col("similarity_percentage") > similarity_threshold)
     return df
 
 if __name__ == "__main__":
+    #Some example code
     spark_session = SparkSession.builder \
         .appName("CSV Loader") \
         .getOrCreate()
