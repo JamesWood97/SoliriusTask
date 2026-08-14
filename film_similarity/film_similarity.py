@@ -34,7 +34,7 @@ def add_similarity_score(df, column, value_string_to_compare):
     """
     The base of most of the similarity scores. Uses jaccard indexing to measure similary of the given column and valuestring
     """
-    words = [genre.strip().lower() for genre in value_string_to_compare.split(",")]
+    words = [word.strip().lower() for word in value_string_to_compare.split(",")]
     print(words)
     #using jaccard index to measure similarity https://en.wikipedia.org/wiki/Jaccard_index
     df = df.withColumn(
@@ -64,7 +64,7 @@ def add_similarity_score(df, column, value_string_to_compare):
 
 def generate_film_comparison_df(film_id, film_df, similarity_threshold=0):
     """
-    Main function for generating a comparision dataframe to a given film_id
+    Main function for generating a comparison dataframe to a given film_id
     """
 
     """
@@ -74,6 +74,7 @@ def generate_film_comparison_df(film_id, film_df, similarity_threshold=0):
     genres_overlap_weight = 2
     director_overlap_weight = 1
     cast_overlap_weight = 2
+    adult_mismatch_scale_factor = 0.5
     scaling_factor = 0.4#used to increase the percentages more for lower values, should be between 0 and 1
 
 
@@ -93,6 +94,8 @@ def generate_film_comparison_df(film_id, film_df, similarity_threshold=0):
                     F.lit(director_overlap_weight) * F.col("director_similarity_score") +\
                     F.lit(cast_overlap_weight) * F.col("cast_similarity_score"))
 
+    #mark down the total similarity score if the adult flag is different, as this is a big difference in content
+    df.withColumn("total_similarity_score", F.when(F.col("adult") == F.lit(film["adult"]), F.col("total_similarity_score")).otherwise(F.col("total_similarity_score") * F.lit(adult_mismatch_scale_factor)))
 
     df = df.withColumn("similarity_percentage",
                        F.round(F.col("total_similarity_score") / F.lit(total_weight) * F.lit(100), 2))

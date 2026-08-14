@@ -139,7 +139,6 @@ def test_multiple_filters(film_df):
     )
     query_filter2 = Filter("director", "in", ("Quentin Tarantino", "George Lucas"))
     result = execute_query((query_filter1, query_filter2), film_df)
-    result.show(n=1000, truncate=False)
     assert set([row.title for row in result.collect()]) == {'Jackie Brown', "Pulp Fiction", "Star Wars: The Phantom Menace (Episode I)"}
 
 
@@ -148,7 +147,7 @@ def test_cast_query_values_to_type(film_df):
     cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == (datetime.date(1980,1,1),)
 
-    query_filter = Filter("adult", ">=", "True")
+    query_filter = Filter("adult", "!=", "True")
     cast_query_values_to_type(query_filter, film_df)
     assert query_filter.values == (True,)
 
